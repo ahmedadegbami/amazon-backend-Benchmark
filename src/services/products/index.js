@@ -12,8 +12,8 @@ const cloudinaryUploader = multer({
   storage: new CloudinaryStorage({
     cloudinary,
     params: {
-      folder: "strive/amazon",
-    },
+      folder: "strive/amazon"
+    }
   }),
   fileFilter: (req, file, multerNext) => {
     if (file.mimetype !== "image/jpeg") {
@@ -22,7 +22,7 @@ const cloudinaryUploader = multer({
       multerNext(null, true);
     }
   },
-  limits: { fileSize: 1 * 1024 * 1024 }, // file size
+  limits: { fileSize: 1 * 1024 * 1024 } // file size
 }).single("imageUrl");
 
 //END POINT TO POST PRODUCTS
@@ -51,13 +51,13 @@ productRouter.get("/", async (req, res, next) => {
       .sort(mongoQuery.options.sort)
       .populate({
         path: "reviews",
-        select: "comment rate",
+        select: "comment rate"
       });
     res.send({
       links: mongoQuery.links(process.env.MY_ENDPOINT, total),
       total,
       totalPages: Math.ceil(total / mongoQuery.options.limit),
-      product,
+      product
     });
   } catch (error) {
     next(error);
@@ -70,7 +70,7 @@ productRouter.get("/:productId", async (req, res, next) => {
   try {
     const product = await ProductModel.findById(req.params.productId).populate({
       path: "reviews",
-      select: "comment rate",
+      select: "comment rate"
     });
     if (product) {
       res.send(product);
@@ -150,15 +150,37 @@ productRouter.post(
   }
 );
 
+//// We need only one end point "get" for reviews
 productRouter.get("/:productId/reviews", async (req, res, next) => {
   // get reviews for all product
   try {
     const product = await ProductModel.findById(req.params.productId).populate({
       path: "reviews",
-      select: "comment rate",
+      select: "comment rate"
     });
     if (product) {
       res.send(product.reviews);
+    } else {
+      next(
+        createError(
+          404,
+          `Product with the id ${req.params.productId} not found`
+        )
+      );
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+productRouter.get("/:productId/", async (req, res, next) => {
+  try {
+    const product = await ProductModel.findById(req.params.productId).populate({
+      path: "reviews",
+      select: "comment rate"
+    });
+    if (product) {
+      res.send(product);
     } else {
       next(
         createError(
